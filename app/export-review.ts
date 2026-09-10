@@ -17,7 +17,7 @@ const setNumFmt=(ws:XLSX.WorkSheet,r1:number,c:number,r2:number,fmt:string)=>{
 
 export function exportReviewWorkbook(r:ReviewResult,newcomerDays:number){
  const rows:(string|number|null)[][]=[],merges:XLSX.Range[]=[],rowHeights:{hpt:number}[]=[];
- const fullWidth=14;
+ const fullWidth=15;
  const mergeRow=(row:number,from=0,to=fullWidth)=>merges.push({s:{r:row,c:from},e:{r:row,c:to}});
  const addBlank=()=>{rows.push([]);rowHeights.push({hpt:9})};
  const addSection=(title:string)=>{const row=rows.length;rows.push([title]);mergeRow(row);rowHeights.push({hpt:24});return row};
@@ -48,9 +48,9 @@ export function exportReviewWorkbook(r:ReviewResult,newcomerDays:number){
  rows.push([`口径说明：新人按入职${newcomerDays}天以内计算；基地×年级及基地总计均按销售姓名去重，基地总计自动消除跨年级重复。`]);mergeRow(rows.length-1);rowHeights.push({hpt:24});
  addBlank();
  const managerSection=addSection("三、经理问题定位");
- const managerHeader=rows.length;rows.push(["基地","经理","年级","上期LTV","本期LTV","LTV变化","承接量","基地占比","到课/差大盘","出勤/差大盘","完课/差大盘","人头/差大盘","挂0","新人挂0","问题定位"]);rowHeights.push({hpt:28});
+ const managerHeader=rows.length;rows.push(["基地","经理","年级","上期LTV","本期LTV","LTV变化","承接量","基地占比","到课/差大盘","出勤/差大盘","完课/差大盘","人头/差大盘","挂0","新人挂0","问题定位","具体动作"]);rowHeights.push({hpt:28});
  const managerStart=rows.length;
- r.managers.forEach(m=>{rows.push([m.base,team(m.name),m.grade,m.previousLtv,m.ltv,m.ltv-m.previousLtv,m.orders,m.share,process(m.arrival,r.current.arrival),process(m.attendance,r.current.attendance),process(m.completion,r.current.completion),process(m.headConv,r.current.headConv),`${m.zero}/${m.people}`,`${m.newcomerZero}/${m.newcomers}`,m.diagnosis]);rowHeights.push({hpt:42})});
+ r.managers.forEach(m=>{rows.push([m.base,team(m.name),m.grade,m.previousLtv,m.ltv,m.ltv-m.previousLtv,m.orders,m.share,process(m.arrival,r.current.arrival),process(m.attendance,r.current.attendance),process(m.completion,r.current.completion),process(m.headConv,r.current.headConv),`${m.zero}/${m.people}`,`${m.newcomerZero}/${m.newcomers}`,m.diagnosis,m.action||"—"]);rowHeights.push({hpt:48})});
  const managerEnd=rows.length-1;
  addBlank();
  const cohortSection=addSection("四、连续承接与本期新承接表现");
@@ -65,7 +65,7 @@ export function exportReviewWorkbook(r:ReviewResult,newcomerDays:number){
 
  const ws=XLSX.utils.aoa_to_sheet(rows);
  ws["!merges"]=merges;ws["!rows"]=rowHeights;
- ws["!cols"]=[{wch:12},{wch:14},{wch:12},{wch:12},{wch:12},{wch:12},{wch:13},{wch:13},{wch:18},{wch:18},{wch:18},{wch:18},{wch:12},{wch:12},{wch:54}];
+ ws["!cols"]=[{wch:12},{wch:14},{wch:12},{wch:12},{wch:12},{wch:12},{wch:13},{wch:13},{wch:18},{wch:18},{wch:18},{wch:18},{wch:12},{wch:12},{wch:54},{wch:60}];
  ws["!freeze"]={xSplit:0,ySplit:6};
  const dark={patternType:"solid",fgColor:{rgb:"173E32"}},green={patternType:"solid",fgColor:{rgb:"D9EFD9"}},soft={patternType:"solid",fgColor:{rgb:"F2F7F1"}},lime={patternType:"solid",fgColor:{rgb:"DFF36B"}};
  const white={rgb:"FFFFFF"},ink={rgb:"173E32"},muted={rgb:"596861"},red={rgb:"BD4F43"};
@@ -77,7 +77,7 @@ export function exportReviewWorkbook(r:ReviewResult,newcomerDays:number){
  [overall,user,sales,focusRows].forEach(({labelRow,textRow})=>{setStyle(ws,labelRow,0,labelRow,fullWidth,{fill:green,font:{bold:true,color:ink},alignment:{vertical:"center"}});setStyle(ws,textRow,0,textRow,fullWidth,{fill:soft,font:{color:muted,sz:11},alignment:{wrapText:true,vertical:"top"}})});
  [gradeHeader,managerHeader,cohortHeader,trendHeader].forEach(row=>setStyle(ws,row,0,row,fullWidth,{fill:green,font:{bold:true,color:ink},alignment:{horizontal:"center",vertical:"center",wrapText:true}}));
  setStyle(ws,gradeStart,0,gradeEnd,8,{alignment:{horizontal:"center",vertical:"center"},border:{bottom:{style:"thin",color:{rgb:"D9E2DD"}}}});
- setStyle(ws,managerStart,0,managerEnd,14,{alignment:{vertical:"center",wrapText:true},border:{bottom:{style:"thin",color:{rgb:"D9E2DD"}}}});
+ setStyle(ws,managerStart,0,managerEnd,15,{alignment:{vertical:"center",wrapText:true},border:{bottom:{style:"thin",color:{rgb:"D9E2DD"}}}});
  setStyle(ws,cohortStart,0,cohortEnd,13,{alignment:{horizontal:"center",vertical:"center"},border:{bottom:{style:"thin",color:{rgb:"D9E2DD"}}}});
  setStyle(ws,trendStart,0,trendEnd,Math.max(0,r.bases.length),{alignment:{horizontal:"center",vertical:"center"}});
  for(let row=gradeStart;row<=gradeEnd;row++)if(rows[row][1]==="总计")setStyle(ws,row,0,row,8,{fill:soft,font:{bold:true,color:ink}});
@@ -87,10 +87,10 @@ export function exportReviewWorkbook(r:ReviewResult,newcomerDays:number){
  [3,7].forEach(c=>setNumFmt(ws,gradeStart,c,gradeEnd,c===3?"0.0%":"0.0"));[6,8].forEach(c=>setNumFmt(ws,gradeStart,c,gradeEnd,"0.0%"));
  [3,4,7,8,11,12].forEach(c=>setNumFmt(ws,cohortStart,c,cohortEnd,c===4||c===8||c===12?"0.0%":"0.0"));
  if(trendEnd>=trendStart)for(let c=1;c<=r.bases.length;c++)setNumFmt(ws,trendStart,c,trendEnd,"0.0");
- ws["!autofilter"]={ref:`A${managerHeader+1}:O${managerEnd+1}`};
+ ws["!autofilter"]={ref:`A${managerHeader+1}:P${managerEnd+1}`};
 
- const managerRows=r.managers.map((m,i)=>({优先级:i+1,基地:m.base,经理:team(m.name),年级:m.grade,连续两期拖累:m.repeatDrag?"是":"否",承接量:m.orders,基地单量占比:m.share,上期LTV:m.previousLtv,本期LTV:m.ltv,LTV变化:m.ltv-m.previousLtv,到课率:m.arrival,到课较大盘:m.arrival==null||r.current.arrival==null?null:m.arrival-r.current.arrival,出勤率:m.attendance,出勤较大盘:m.attendance==null||r.current.attendance==null?null:m.attendance-r.current.attendance,完课率:m.completion,完课较大盘:m.completion==null||r.current.completion==null?null:m.completion-r.current.completion,人头转化:m.headConv,人头较大盘:m.headConv-r.current.headConv,挂0人数:m.zero,团队人数:m.people,新人数:m.newcomers,新人挂0:m.newcomerZero,Top2营收占比:m.top2Share,连续2期人数:m.cohort2.people,连续2期LTV:m.cohort2.ltv,连续2期人头:m.cohort2.headConv,连续2期挂0:m.cohort2.zero,连续3期人数:m.cohort3?.people??null,连续3期LTV:m.cohort3?.ltv??null,连续3期人头:m.cohort3?.headConv??null,连续3期挂0:m.cohort3?.zero??null,本期新承接人数:m.newTeam.people,本期新承接LTV:m.newTeam.ltv,本期新承接人头:m.newTeam.headConv,本期新承接挂0:m.newTeam.zero,问题定位:m.diagnosis}));
- const managerWs=XLSX.utils.json_to_sheet(managerRows);managerWs["!freeze"]={xSplit:2,ySplit:1};managerWs["!autofilter"]={ref:managerWs["!ref"]||"A1:AJ1"};managerWs["!cols"]=Object.keys(managerRows[0]||{经理:""}).map(k=>({wch:k==="问题定位"?56:Math.max(11,Math.min(18,k.length*2+2))}));
+ const managerRows=r.managers.map((m,i)=>({优先级:i+1,基地:m.base,经理:team(m.name),方向:m.direction==="up"?"正向增量":m.direction==="down"?"负向拖累":"基本持平",年级:m.grade,连续两期拖累:m.repeatDrag?"是":"否",承接量:m.orders,基地单量占比:m.share,上期LTV:m.previousLtv,本期LTV:m.ltv,LTV变化:m.ltv-m.previousLtv,到课率:m.arrival,到课较大盘:m.arrival==null||r.current.arrival==null?null:m.arrival-r.current.arrival,出勤率:m.attendance,出勤较大盘:m.attendance==null||r.current.attendance==null?null:m.attendance-r.current.attendance,完课率:m.completion,完课较大盘:m.completion==null||r.current.completion==null?null:m.completion-r.current.completion,人头转化:m.headConv,人头较大盘:m.headConv-r.current.headConv,挂0人数:m.zero,团队人数:m.people,新人数:m.newcomers,新人挂0:m.newcomerZero,Top2营收占比:m.top2Share,连续2期人数:m.cohort2.people,连续2期LTV:m.cohort2.ltv,连续2期人头:m.cohort2.headConv,连续2期挂0:m.cohort2.zero,连续3期人数:m.cohort3?.people??null,连续3期LTV:m.cohort3?.ltv??null,连续3期人头:m.cohort3?.headConv??null,连续3期挂0:m.cohort3?.zero??null,本期新承接人数:m.newTeam.people,本期新承接LTV:m.newTeam.ltv,本期新承接人头:m.newTeam.headConv,本期新承接挂0:m.newTeam.zero,问题定位:m.diagnosis,具体动作:m.action||"—"}));
+ const managerWs=XLSX.utils.json_to_sheet(managerRows);managerWs["!freeze"]={xSplit:2,ySplit:1};managerWs["!autofilter"]={ref:managerWs["!ref"]||"A1:AK1"};managerWs["!cols"]=Object.keys(managerRows[0]||{经理:""}).map(k=>({wch:k==="问题定位"?56:k==="具体动作"?60:Math.max(11,Math.min(18,k.length*2+2))}));
  if(managerRows.length){setStyle(managerWs,0,0,0,Object.keys(managerRows[0]).length-1,{fill:dark,font:{bold:true,color:white},alignment:{horizontal:"center",vertical:"center",wrapText:true}})}
  const managerLast=managerRows.length;[6,10,11,12,13,14,15,16,17,22,25,29,33].forEach(c=>setNumFmt(managerWs,1,c,managerLast,"0.0%"));[7,8,9,24,28,32].forEach(c=>setNumFmt(managerWs,1,c,managerLast,c===9?"+0.0;-0.0;0.0":"0.0"));
 
