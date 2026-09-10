@@ -126,14 +126,15 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 
 /* Keep the official mark crisp at every header width. */
 .brand-logo{
-  width:auto;
+  width:135px;
   height:34px;
-  max-width:178px;
+  max-width:none;
+  flex:0 0 auto;
   object-fit:contain;
   object-position:left center;
 }
-@media(max-width:760px){.brand-logo{height:30px;max-width:148px}}
-@media(max-width:430px){.brand-logo{height:28px;max-width:132px}}
+@media(max-width:760px){.brand-logo{width:120px;height:30px}}
+@media(max-width:430px){.brand-logo{width:112px;height:28px}}
 
 /* A simple upload arrow keeps the drop zone light and task-focused. */
 .upload-icon{
